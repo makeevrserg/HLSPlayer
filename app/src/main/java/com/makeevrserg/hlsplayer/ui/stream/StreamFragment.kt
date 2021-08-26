@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
+import com.google.android.material.snackbar.Snackbar
 import com.makeevrserg.hlsplayer.R
 import com.makeevrserg.hlsplayer.databinding.StreamFragmentBinding
 
@@ -33,19 +34,24 @@ class StreamFragment : Fragment() {
 
 
 
-
-        viewModel.player.observe(viewLifecycleOwner,{
-            binding.playerView.player = it
+        viewModel.player.observe(viewLifecycleOwner, {
+            it?.let { binding.playerView.player = it }
+        })
+        /**
+         * Сообщения об ошибках/подключении и названиях стримов
+         */
+        viewModel.message.observe(viewLifecycleOwner, {
+            Snackbar.make(
+                requireActivity().findViewById(android.R.id.content),
+                it,
+                Snackbar.LENGTH_SHORT
+            ).show()
         })
 
 
 
         return binding.root
     }
-
-
-
-
 
 
 }

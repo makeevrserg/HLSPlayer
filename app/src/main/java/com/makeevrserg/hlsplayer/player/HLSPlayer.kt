@@ -15,31 +15,25 @@ import com.google.android.exoplayer2.util.Util
 
 class HLSPlayer(private val context: Context, private var url: String) {
 
-
     private fun getURI() = Uri.parse(url)
 
     private fun getUserAgent() = Util.getUserAgent(context, "HLS Player")
 
-
-
-
-
     /**
-     * Media item with m3u8 type
+     * Задание MediaItem тип m3u8
      */
     private fun getMediaItem() = MediaItem.Builder().setUri(getURI())
         .setMimeType(MimeTypes.APPLICATION_M3U8).build()
-
-
 
 
     private fun getHlsExtractorFactory() = DefaultHlsExtractorFactory(
         DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES, true
     )
 
-    private fun getDataSourceFactory() = DefaultDataSourceFactory(context,getUserAgent())
+    private fun getDataSourceFactory() = DefaultDataSourceFactory(context, getUserAgent())
+
     /**
-     * MediaSource buidler
+     * Создание MediaSource. setAllowChunklessPreparation для более быстрой прогрузки(как сказано в документации)
      */
     private fun getHlsMediaSource() = HlsMediaSource.Factory(getDataSourceFactory())
         .setAllowChunklessPreparation(true)
@@ -48,64 +42,54 @@ class HLSPlayer(private val context: Context, private var url: String) {
 
     private fun getMediaSourceFactory() = DefaultMediaSourceFactory(getDataSourceFactory())
 
-
-
     /**
-     * ExoPlayer builder
+     * Создание самого плеера
      */
     private fun getExoPlayer() =
         SimpleExoPlayer.Builder(context).setMediaSourceFactory(getMediaSourceFactory())
             .build()
 
-
-
     /**
-     * Player events listener
+     * Добавление слушателя ошибок
      */
     private val listener: HLSListener = HLSListener(this)
 
-    /**
-     * Player Reference
-     */
-    private val exoPlayer: SimpleExoPlayer = getExoPlayer()
-    val player: SimpleExoPlayer
+
+    private var exoPlayer: SimpleExoPlayer? = getExoPlayer()
+    val player: SimpleExoPlayer?
         get() = exoPlayer
 
 
-    init {
-        play()
-    }
-
 
     /**
-     * Stop streaming and remove listeners
+     * Пауза
      */
-    fun stop() {
-        exoPlayer.playWhenReady = false
-        exoPlayer.stop()
-        exoPlayer.removeListener(listener)
+    fun pause() {
+        exoPlayer?.playWhenReady = false
+        exoPlayer?.stop()
+        exoPlayer?.removeListener(listener)
     }
 
     /**
-     * Set media and play stream
+     * Пересоздание mediaSource и включение плеера
      */
-    fun play() {
-        exoPlayer.setMediaSource(getHlsMediaSource(), true)
-        exoPlayer.prepare()
-        exoPlayer.playWhenReady = true
-        exoPlayer.addListener(listener)
+    private fun play() {
+        exoPlayer?.setMediaSource(getHlsMediaSource(), true)
+        exoPlayer?.prepare()
+        exoPlayer?.playWhenReady = true
+        exoPlayer?.addListener(listener)
     }
 
     /**
-     * Reload player
+     * Перезагрузка
      */
     fun retry() {
-        stop()
+        pause()
         play()
     }
 
     /**
-     * Set new url for stream and reload player
+     * Установка нового адреса стрима и перезагрузка плеера
      */
     fun setURL(url: String) {
         this.url = url
@@ -113,11 +97,21 @@ class HLSPlayer(private val context: Context, private var url: String) {
     }
 
     /**
-     * Seek player to default position in case of errors 404, BehindLiveWindow, etc
+     * Перенос ползунка на default position в случае стандартных ошибок с HLS: 404, BehindLiveWindow, etc
+     * @see HLSListener.onPlayerError
      */
-    fun reseek() {
-        exoPlayer.seekToDefaultPosition()
-        exoPlayer.prepare()
+    fun onPlayerLoadError() {
+        exoPlayer?.seekToDefaultPosition()
+        exoPlayer?.prepare()
+    }
+
+    /**
+     * Полное отключение плеера
+     */
+    fun disable() {
+        pause()
+        exoPlayer?.release()
+        exoPlayer = null
     }
 
 
