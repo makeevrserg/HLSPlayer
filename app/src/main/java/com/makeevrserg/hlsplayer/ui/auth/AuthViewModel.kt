@@ -12,11 +12,14 @@ import com.makeevrserg.hlsplayer.network.cubicapi.CubicAPI
 import com.makeevrserg.hlsplayer.network.cubicapi.response.Camera
 import com.makeevrserg.hlsplayer.network.cubicapi.response.CameraItem
 import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.timestamp.CameraFileTimestamps
+import com.makeevrserg.hlsplayer.utils.Event
 import com.makeevrserg.hlsplayer.utils.Preferences
 import com.makeevrserg.hlsplayer.utils.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import retrofit2.awaitResponse
+import java.lang.Exception
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 
@@ -30,33 +33,30 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     val isLoading: LiveData<Boolean>
         get() = _isLoading
 
-    private fun startLoading(){
+    private fun startLoading() {
         _isLoading.postValue(true)
     }
-    fun doneLoading(){
+
+    fun doneLoading() {
         _isLoading.postValue(false)
     }
 
     /**
      * Сообщение, которые выводится пользователю в SnackBar'е чтобы оповестить его о чем-либо
      */
-    private val _message = MutableLiveData<String?>()
-    val message: LiveData<String?>
+    private val _message = MutableLiveData<Event<String?>>()
+    val message: LiveData<Event<String?>>
         get() = _message
 
     private fun startShowMessage(msg: String) {
-        _message.postValue(msg)
-    }
-
-    fun stopShowMessage() {
-        _message.postValue(null)
+        _message.postValue(Event(msg))
     }
 
     /**
      * Для дебага
      */
-    private val _logMessage = MutableLiveData<String>()
-    val logMessage: LiveData<String>
+    private val _logMessage = MutableLiveData<Event<String>>()
+    val logMessage: LiveData<Event<String>>
         get() = _logMessage
 
 
@@ -90,17 +90,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * При нажатии на item камеры из RecyclerView показывается диалог с возможностью выбора стрима либо периода
      */
-    private val _selectCameraDialog = MutableLiveData<Boolean>()
-    val selectCameraDialog: LiveData<Boolean>
+    private val _selectCameraDialog = MutableLiveData<Event<Boolean>>()
+    val selectCameraDialog: LiveData<Event<Boolean>>
         get() = _selectCameraDialog
-
-    private fun startShowCameraDialog() {
-        _selectCameraDialog.value = true
-    }
-
-    fun stopShowCameraDialog() {
-        _selectCameraDialog.value = false
-    }
 
     /**
      * Обновление токена пользователя в билдере Retrofit'а
@@ -121,21 +113,18 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             startLoading()
             try {
-                val user = CubicAPI.retrofitService.loginUser(login, password).await()
-                Preferences(getApplication()).saveUserAuthorized(user)
-                startShowMessage("Успешная авторизация")
-                updateToken(getApplication())
-                _logMessage.postValue(user.toString())
-            } catch (e: HttpException) {
-                startShowMessage("Не удалось авторизоваться")
-            } catch (e: ConnectException) {
-                startShowMessage("Не удалось подключиться")
-
-            } catch (e: ErrnoException) {
-                startShowMessage("Не удалось подключиться")
-
-            } catch (e: SocketTimeoutException) {
-                startShowMessage("Нет подключения к серверу")
+                val response = CubicAPI.retrofitService.loginUser(login, password).awaitResponse()
+                if (response.isSuccessful) {
+                    Preferences(getApplication()).saveUserAuthorized(
+                        response.body() ?: return@launch
+                    )
+                    startShowMessage("Успешная авторизация")
+                    updateToken(getApplication())
+                    _logMessage.postValue(Event(response.body().toString()))
+                }
+            } catch (e: Exception) {
+                startShowMessage("Непредвиденная ошибка")
+                Log.d(TAG, "onUserInfoClicked: ${e.stackTraceToString()}")
             }
             doneLoading()
         }
@@ -146,17 +135,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             startLoading()
             try {
-                val userInfo = CubicAPI.retrofitService.getUserInfo().await()
-                _logMessage.postValue(userInfo.toString())
-            } catch (e: HttpException) {
-                startShowMessage("Вы не авторизованы")
-            } catch (e: ConnectException) {
-                startShowMessage("Не удалось подключиться")
-            } catch (e: ErrnoException) {
-                startShowMessage("Не удалось подключиться")
-
-            } catch (e: SocketTimeoutException) {
-                startShowMessage("Нет подключения к серверу")
+                val response = CubicAPI.retrofitService.getUserInfo().awaitResponse()
+                if (response.isSuccessful)
+                    _logMessage.postValue(Event(response.body().toString()))
+            } catch (e: Exception) {
+                startShowMessage("Непредвиденная ошибка")
+                Log.d(TAG, "onUserInfoClicked: ${e.stackTraceToString()}")
             }
             doneLoading()
         }
@@ -167,18 +151,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             startLoading()
             try {
                 val user = Preferences(getApplication()).getUserAuthorized()
-                val userInfo = CubicAPI.retrofitService.logout(user?.refresh_token).await()
+                val userInfo = CubicAPI.retrofitService.logout(user?.refresh_token).awaitResponse()
                 startShowMessage("Вы вышли")
-                _logMessage.postValue(userInfo.toString())
+                _logMessage.postValue(Event(userInfo.toString()))
                 _cameras.value?.clear()
-            } catch (e: HttpException) {
-                startShowMessage("Вы не авторизованы")
-            } catch (e: ConnectException) {
-                startShowMessage("Не удалось подключиться")
-            } catch (e: ErrnoException) {
-                startShowMessage("Не удалось подключиться")
-            } catch (e: SocketTimeoutException) {
-                startShowMessage("Нет подключения к серверу")
+            } catch (e: Exception) {
+                startShowMessage("Непредвиденная ошибка")
+                Log.d(TAG, "onUserInfoClicked: ${e.stackTraceToString()}")
             }
             doneLoading()
         }
@@ -188,17 +167,15 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             startLoading()
             try {
-                val cameras = CubicAPI.retrofitService.getCameras().await()
-                _logMessage.postValue(cameras.toString())
-                _cameras.postValue(cameras)
-            } catch (e: HttpException) {
-                startShowMessage("Вы не авторизованы")
-            } catch (e: ConnectException) {
-                startShowMessage("Не удалось подключиться")
-            } catch (e: ErrnoException) {
-                startShowMessage("Не удалось подключиться")
-            } catch (e: SocketTimeoutException) {
-                startShowMessage("Нет подключения к серверу")
+                val response = CubicAPI.retrofitService.getCameras().awaitResponse()
+
+                if (response.isSuccessful) {
+                    _logMessage.postValue(Event(response.body().toString()))
+                    _cameras.postValue(response.body())
+                }
+            } catch (e: Exception) {
+                startShowMessage("Непредвиденная ошибка")
+                Log.d(TAG, "onUserInfoClicked: ${e.stackTraceToString()}")
             }
             doneLoading()
         }
@@ -209,7 +186,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
      * onClickListener of RecyclerView
      */
     fun onOpenCameraDialog(camera: CameraItem) {
-        startShowCameraDialog()
+        _selectCameraDialog.postValue(Event(true))
         selectedCamera = camera
     }
 
@@ -222,23 +199,14 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             startLoading()
             try {
-                println(cameraId)
-                println(timeStamp)
-                val cameraTimestamps =
-                    CubicAPI.retrofitService.getVideoByTimestamp(cameraId, timeStamp).await()
-
-                _cameraTimestamps.postValue(cameraTimestamps)
-
-            } catch (e: HttpException) {
-                startShowMessage("Нет видео по этой дате")
-            } catch (e: ConnectException) {
-                startShowMessage("Не удалось подключиться")
-            } catch (e: ErrnoException) {
-                startShowMessage("Не удалось подключиться")
-            } catch (e: SocketTimeoutException) {
-                startShowMessage("Нет подключения к серверу")
+                val response =
+                    CubicAPI.retrofitService.getVideoByTimestamp(cameraId, timeStamp).awaitResponse()
+                if (response.isSuccessful)
+                    _cameraTimestamps.postValue(response.body())
+            }catch (e: Exception) {
+                startShowMessage("Непредвиденная ошибка")
+                Log.d(TAG, "onUserInfoClicked: ${e.stackTraceToString()}")
             }
-            doneLoading()
         }
 
 

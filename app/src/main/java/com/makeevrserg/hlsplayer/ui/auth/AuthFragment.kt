@@ -50,18 +50,19 @@ class AuthFragment : Fragment() {
             viewModel.onCamerasClicked()
         }
 
-        viewModel.logMessage.observe(viewLifecycleOwner, {
-            binding.textViewLog.text = it
+        viewModel.logMessage.observe(viewLifecycleOwner, { event ->
+            event.getContentIfNotHandled()?.let {
+                binding.textViewLog.text = it
+            }
         })
-        viewModel.message.observe(viewLifecycleOwner, {
-            it?.let {
+        viewModel.message.observe(viewLifecycleOwner, { event ->
+            event.getContentIfNotHandled()?.let {
                 Snackbar.make(
                     requireActivity().findViewById(android.R.id.content),
                     it,
                     Snackbar.LENGTH_SHORT
                 ).show()
             }
-
         })
 
 
@@ -92,7 +93,8 @@ class AuthFragment : Fragment() {
         })
 
         viewModel.selectCameraDialog.observe(viewLifecycleOwner, { showDialog ->
-            if (showDialog != true)
+
+            if (showDialog.getContentIfNotHandled() != true)
                 return@observe
 
             activity?.let { fragmentActivity ->
@@ -122,7 +124,6 @@ class AuthFragment : Fragment() {
                         }
                     }.create().show()
             }
-            viewModel.stopShowCameraDialog()
         })
 
 

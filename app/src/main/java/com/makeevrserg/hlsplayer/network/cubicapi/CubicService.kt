@@ -10,6 +10,8 @@ import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.timestamp.Came
 import kotlinx.coroutines.Deferred
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import retrofit2.Call
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
@@ -20,27 +22,27 @@ interface CubicService {
     public fun loginUser(
         @Query("login") login: String?,
         @Query("password") password: String?
-    ): Deferred<UserAuthorized>
+    ): Call<UserAuthorized>
 
 
     @GET("auth/me")
-    public fun getUserInfo(): Deferred<UserInfo>
+    public fun getUserInfo(): Call<UserInfo>
 
     @POST("auth/logout")
     public fun logout(
         @Query("refresh_token") refreshToken: String?
-    ): Deferred<Unit>
+    ): Call<Unit>
 
     @GET("cameras")
     fun getCameras(
         @Query("is_folder") isFolder:Int?=0
-    ):Deferred<Camera>
+    ):Call<Camera>
 
     @GET("files/movies/timestamp/")
     fun getVideoByTimestamp(
         @Query("camera_id") cameraId:Int?,
         @Query("timestamp") timestamp:String?
-    ):Deferred<CameraFileTimestamps>
+    ):Call<CameraFileTimestamps>
 
 }
 
