@@ -1,4 +1,4 @@
-package com.makeevrserg.hlsplayer.player
+package com.makeevrserg.hlsplayer.ui.stream.player
 
 import android.content.Context
 import android.net.ConnectivityManager

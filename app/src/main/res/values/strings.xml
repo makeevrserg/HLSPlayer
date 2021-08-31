@@ -1,5 +1,4 @@
 <resources>
     <string name="app_name">HLS Player</string>
-<!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="shared_prefs_config">shared_prefs_config</string>
 </resources>

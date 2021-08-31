@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="camera"
+            type="com.makeevrserg.hlsplayer.network.cubicapi.response.CameraItem" />
+
+        <variable
+            name="viewmodel"
+            type="com.makeevrserg.hlsplayer.ui.auth.AuthViewModel" />
+    </data>
+
+    <LinearLayout
+        android:id="@+id/item_content"
+        android:layout_width="match_parent"
+        android:layout_height="?android:attr/listPreferredItemHeight"
+        android:gravity="center"
+        android:onClick="@{() -> viewmodel.onOpenCameraDialog(camera)}"
+        android:orientation="horizontal">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text='@{"Имя: "+camera.name}'
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text='@{"ID: "+camera.id}' />
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text='@{"Создана: "+camera.created_at}' />
+        </LinearLayout>
+    </LinearLayout>
+</layout>

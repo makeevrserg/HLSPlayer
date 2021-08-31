@@ -1,6 +1,5 @@
-package com.makeevrserg.hlsplayer.player
+package com.makeevrserg.hlsplayer.ui.stream.player
 
-import android.util.Log
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.Timeline
@@ -36,7 +35,7 @@ class HLSListener(val hlsPlayer: HLSPlayer) : Player.Listener {
      * Без использования, но можно читать манифест (Если нужно)
      */
     override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-        val manifest = hlsPlayer.player?.currentManifest as HlsManifest
+        val manifest = (hlsPlayer.player?.currentManifest?:return )as HlsManifest
 
     }
 

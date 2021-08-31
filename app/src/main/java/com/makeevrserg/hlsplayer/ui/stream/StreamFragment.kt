@@ -26,6 +26,12 @@ class StreamFragment : Fragment() {
         val binding: StreamFragmentBinding =
             DataBindingUtil.inflate(inflater, R.layout.stream_fragment, container, false)
 
+        val arguments = StreamFragmentArgs.fromBundle(requireArguments())
+
+
+
+        viewModel.setUrl(arguments.hlsUrl)
+
         binding.viewModel = viewModel
         binding.lifecycleOwner = viewLifecycleOwner
 
@@ -33,6 +39,9 @@ class StreamFragment : Fragment() {
         lifecycle.addObserver(viewModel.HLSPlayerObserver())
 
 
+        viewModel.mediaUrl.observe(viewLifecycleOwner,{
+            binding.playerView.useController = !(it?.contains("m3u8")?:false)
+        })
 
         viewModel.player.observe(viewLifecycleOwner, {
             it?.let { binding.playerView.player = it }

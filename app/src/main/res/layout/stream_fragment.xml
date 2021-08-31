@@ -23,7 +23,6 @@
             android:layout_height="match_parent"
             app:resize_mode="fit"
             app:show_buffering="always"
-            app:use_controller="false"
             android:background="?colorPrimaryVariant"/>
 
 
@@ -43,26 +42,26 @@
 
 
 
-        <Button
-            android:id="@+id/buttonCamEntry"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="@{()->viewModel.prevStream()}"
-            android:text="Prev stream"
-            android:textAllCaps="true"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+<!--        <Button-->
+<!--            android:id="@+id/buttonCamEntry"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:onClick="@{()->viewModel.prevStream()}"-->
+<!--            android:text="Prev stream"-->
+<!--            android:textAllCaps="true"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toTopOf="parent" />-->
 
-        <Button
-            android:id="@+id/buttonCamOffice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="@{()->viewModel.nextStream()}"
-            android:text="Next Stream"
-            android:textAllCaps="true"
+<!--        <Button-->
+<!--            android:id="@+id/buttonCamOffice"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:onClick="@{()->viewModel.nextStream()}"-->
+<!--            android:text="Next Stream"-->
+<!--            android:textAllCaps="true"-->
 
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintTop_toTopOf="parent" />-->
 
 
 

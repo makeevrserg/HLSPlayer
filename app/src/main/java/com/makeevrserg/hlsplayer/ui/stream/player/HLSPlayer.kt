@@ -1,4 +1,4 @@
-package com.makeevrserg.hlsplayer.player
+package com.makeevrserg.hlsplayer.ui.stream.player
 
 import android.content.Context
 import android.net.Uri
@@ -22,9 +22,12 @@ class HLSPlayer(private val context: Context, private var url: String) {
     /**
      * Задание MediaItem тип m3u8
      */
-    private fun getMediaItem() = MediaItem.Builder().setUri(getURI())
+    private fun getHlsMediaItem() = MediaItem.Builder().setUri(getURI())
         .setMimeType(MimeTypes.APPLICATION_M3U8).build()
-
+    /**
+     * Если передается обычное URL, не HLS
+     */
+    private fun getMediaItem() = MediaItem.Builder().setUri(getURI()).build()
 
     private fun getHlsExtractorFactory() = DefaultHlsExtractorFactory(
         DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES, true
@@ -38,7 +41,12 @@ class HLSPlayer(private val context: Context, private var url: String) {
     private fun getHlsMediaSource() = HlsMediaSource.Factory(getDataSourceFactory())
         .setAllowChunklessPreparation(true)
         .setExtractorFactory(getHlsExtractorFactory())
-        .createMediaSource(getMediaItem())
+        .createMediaSource(getHlsMediaItem())
+
+    /**
+     * Если передается обычное URL, не HLS
+     */
+    private fun getMediaSource() = DefaultMediaSourceFactory(context).createMediaSource(getMediaItem())
 
     private fun getMediaSourceFactory() = DefaultMediaSourceFactory(getDataSourceFactory())
 
@@ -74,7 +82,11 @@ class HLSPlayer(private val context: Context, private var url: String) {
      * Пересоздание mediaSource и включение плеера
      */
     private fun play() {
-        exoPlayer?.setMediaSource(getHlsMediaSource(), true)
+        if (url.contains("m3u8"))
+            exoPlayer?.setMediaSource(getHlsMediaSource(), true)
+        else
+            exoPlayer?.setMediaSource(getMediaSource(),true)
+
         exoPlayer?.prepare()
         exoPlayer?.playWhenReady = true
         exoPlayer?.addListener(listener)
