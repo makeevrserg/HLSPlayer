@@ -1,6 +1,7 @@
 package com.makeevrserg.hlsplayer.ui.stream
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.*
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.makeevrserg.hlsplayer.ui.stream.player.ConnectionManager
@@ -75,6 +76,7 @@ class StreamViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setUrl(hlsUrl: String?) {
         _mediaUrl.value = hlsUrl
+        Log.d("StreamViewModel", "setUrl: ${hlsUrl}")
         hlsPlayer.setURL(_mediaUrl.value ?: "")
     }
 

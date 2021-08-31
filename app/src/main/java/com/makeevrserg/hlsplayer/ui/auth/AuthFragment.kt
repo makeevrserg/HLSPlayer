@@ -1,6 +1,7 @@
 package com.makeevrserg.hlsplayer.ui.auth
 
 import android.app.DatePickerDialog
+import android.app.Dialog
 import android.os.Build
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
@@ -8,6 +9,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.DatePicker
 import androidx.appcompat.app.AlertDialog
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
@@ -119,15 +121,14 @@ class AuthFragment : Fragment() {
 
                                     }
                                     datePickerDialog.show()
+
+
                                 }
                             }
                         }
                     }.create().show()
             }
         })
-
-
-
         return binding.root
     }
 

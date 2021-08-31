@@ -29,16 +29,16 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     val TAG = "AuthViewModel"
 
 
-    private val _isLoading = MutableLiveData<Boolean>()
-    val isLoading: LiveData<Boolean>
+    private val _isLoading = MutableLiveData<Event<Boolean>>()
+    val isLoading: LiveData<Event<Boolean>>
         get() = _isLoading
 
     private fun startLoading() {
-        _isLoading.postValue(true)
+        _isLoading.postValue(Event(true))
     }
 
     fun doneLoading() {
-        _isLoading.postValue(false)
+        _isLoading.postValue(Event(false))
     }
 
     /**
@@ -121,6 +121,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     startShowMessage("Успешная авторизация")
                     updateToken(getApplication())
                     _logMessage.postValue(Event(response.body().toString()))
+                } else {
+                    _logMessage.postValue(Event(response.body().toString()))
                 }
             } catch (e: Exception) {
                 startShowMessage("Непредвиденная ошибка")
@@ -137,7 +139,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val response = CubicAPI.retrofitService.getUserInfo().awaitResponse()
                 if (response.isSuccessful)
+                    _logMessage.postValue(Event(response.body().toString())) else {
                     _logMessage.postValue(Event(response.body().toString()))
+                }
             } catch (e: Exception) {
                 startShowMessage("Непредвиденная ошибка")
                 Log.d(TAG, "onUserInfoClicked: ${e.stackTraceToString()}")
@@ -172,6 +176,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 if (response.isSuccessful) {
                     _logMessage.postValue(Event(response.body().toString()))
                     _cameras.postValue(response.body())
+                } else {
+                    _logMessage.postValue(Event(response.body().toString()))
                 }
             } catch (e: Exception) {
                 startShowMessage("Непредвиденная ошибка")
@@ -200,13 +206,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             startLoading()
             try {
                 val response =
-                    CubicAPI.retrofitService.getVideoByTimestamp(cameraId, timeStamp).awaitResponse()
+                    CubicAPI.retrofitService.getVideoByTimestamp(cameraId, timeStamp)
+                        .awaitResponse()
                 if (response.isSuccessful)
-                    _cameraTimestamps.postValue(response.body())
-            }catch (e: Exception) {
+                    _cameraTimestamps.postValue(response.body()) else {
+                    _logMessage.postValue(Event(response.body().toString()))
+                }
+            } catch (e: Exception) {
                 startShowMessage("Непредвиденная ошибка")
                 Log.d(TAG, "onUserInfoClicked: ${e.stackTraceToString()}")
             }
+            doneLoading()
         }
 
 
