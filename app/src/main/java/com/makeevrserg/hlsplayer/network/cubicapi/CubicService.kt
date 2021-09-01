@@ -3,10 +3,11 @@ package com.makeevrserg.hlsplayer.network.cubicapi
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
-import com.makeevrserg.hlsplayer.network.cubicapi.response.Camera
+import com.makeevrserg.hlsplayer.network.cubicapi.response.Cameras
 import com.makeevrserg.hlsplayer.network.cubicapi.response.UserAuthorized
 import com.makeevrserg.hlsplayer.network.cubicapi.response.UserInfo
 import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.timestamp.CameraFileTimestamps
+import com.makeevrserg.hlsplayer.network.cubicapi.response.files.Files
 import kotlinx.coroutines.Deferred
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -25,6 +26,10 @@ interface CubicService {
     ): Call<UserAuthorized>
 
 
+
+    @GET("files")
+    public fun getFiles():Call<Files>
+
     @GET("auth/me")
     public fun getUserInfo(): Call<UserInfo>
 
@@ -36,7 +41,7 @@ interface CubicService {
     @GET("cameras")
     fun getCameras(
         @Query("is_folder") isFolder:Int?=0
-    ):Call<Camera>
+    ):Call<Cameras>
 
     @GET("files/movies/timestamp/")
     fun getVideoByTimestamp(

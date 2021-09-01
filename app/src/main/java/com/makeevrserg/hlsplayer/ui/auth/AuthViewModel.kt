@@ -9,7 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.makeevrserg.hlsplayer.network.cubicapi.CubicAPI
-import com.makeevrserg.hlsplayer.network.cubicapi.response.Camera
+import com.makeevrserg.hlsplayer.network.cubicapi.response.Cameras
 import com.makeevrserg.hlsplayer.network.cubicapi.response.CameraItem
 import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.timestamp.CameraFileTimestamps
 import com.makeevrserg.hlsplayer.utils.Event
@@ -63,8 +63,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Список доступных камер
      */
-    private val _cameras = MutableLiveData<Camera>()
-    val cameras: LiveData<Camera>
+    private val _cameras = MutableLiveData<Cameras>()
+    val cameras: LiveData<Cameras>
         get() = _cameras
 
 

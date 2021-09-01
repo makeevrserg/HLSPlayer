@@ -13,17 +13,25 @@ import com.google.android.exoplayer2.util.MimeTypes
 import com.google.android.exoplayer2.util.Util
 
 
-class HLSPlayer(private val context: Context, private var url: String) {
+class HLSPlayer(
+    private val context: Context,
+    private var url: String,
+    private val _onMediaItemTransition: () -> Unit
+) {
 
     private fun getURI() = Uri.parse(url)
 
     private fun getUserAgent() = Util.getUserAgent(context, "HLS Player")
+
+    fun isLiveStream() = url.contains("m3u8")
+
 
     /**
      * Задание MediaItem тип m3u8
      */
     private fun getHlsMediaItem() = MediaItem.Builder().setUri(getURI())
         .setMimeType(MimeTypes.APPLICATION_M3U8).build()
+
     /**
      * Если передается обычное URL, не HLS
      */
@@ -46,7 +54,8 @@ class HLSPlayer(private val context: Context, private var url: String) {
     /**
      * Если передается обычное URL, не HLS
      */
-    private fun getMediaSource() = DefaultMediaSourceFactory(context).createMediaSource(getMediaItem())
+    private fun getMediaSource() =
+        DefaultMediaSourceFactory(context).createMediaSource(getMediaItem())
 
     private fun getMediaSourceFactory() = DefaultMediaSourceFactory(getDataSourceFactory())
 
@@ -69,6 +78,8 @@ class HLSPlayer(private val context: Context, private var url: String) {
 
 
 
+
+
     /**
      * Пауза
      */
@@ -81,11 +92,12 @@ class HLSPlayer(private val context: Context, private var url: String) {
     /**
      * Пересоздание mediaSource и включение плеера
      */
-    private fun play() {
+    private fun play(startPosition:Long = 0) {
+        exoPlayer?.clearMediaItems()
         if (url.contains("m3u8"))
             exoPlayer?.setMediaSource(getHlsMediaSource(), true)
         else
-            exoPlayer?.setMediaSource(getMediaSource(),true)
+            exoPlayer?.setMediaSource(getMediaSource(), startPosition)
 
         exoPlayer?.prepare()
         exoPlayer?.playWhenReady = true
@@ -95,17 +107,21 @@ class HLSPlayer(private val context: Context, private var url: String) {
     /**
      * Перезагрузка
      */
-    fun retry() {
+    fun retry(startPosition:Long = 0) {
         pause()
-        play()
+        play(startPosition)
     }
 
     /**
      * Установка нового адреса стрима и перезагрузка плеера
      */
-    fun setURL(url: String) {
+    fun setURL(url: String,startPosition:Long = 0) {
         this.url = url
-        retry()
+        retry(startPosition)
+    }
+    fun addUrl(url:String){
+        this.url = url
+        exoPlayer?.addMediaSource(getMediaSource())
     }
 
     /**
@@ -124,6 +140,16 @@ class HLSPlayer(private val context: Context, private var url: String) {
         pause()
         exoPlayer?.release()
         exoPlayer = null
+
+
+    }
+
+    fun seekTo(toSeek: Int) {
+        exoPlayer?.seekTo(toSeek.toLong())
+    }
+
+    fun onMediaItemTransition() {
+        _onMediaItemTransition.invoke()
     }
 
 

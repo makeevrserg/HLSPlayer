@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.*
 import com.google.android.exoplayer2.SimpleExoPlayer
-import com.makeevrserg.hlsplayer.ui.stream.player.ConnectionManager
 import com.makeevrserg.hlsplayer.ui.stream.player.HLSPlayer
 
 
@@ -71,7 +70,7 @@ class StreamViewModel(application: Application) : AndroidViewModel(application) 
     fun retry() {
         _message.value = "Переподключение"
         hlsPlayer.retry()
-        connectionManager.checkInternetConnection()
+//        connectionManager.checkInternetConnection()
     }
 
     fun setUrl(hlsUrl: String?) {
@@ -90,19 +89,21 @@ class StreamViewModel(application: Application) : AndroidViewModel(application) 
     /**
      * Ссылка на HLS Player
      */
-    private val hlsPlayer: HLSPlayer = HLSPlayer(application.applicationContext, "")
+    private val hlsPlayer: HLSPlayer = HLSPlayer(application.applicationContext, "") {
+
+    }
     private val _player = MutableLiveData<SimpleExoPlayer?>(hlsPlayer.player)
     val player: LiveData<SimpleExoPlayer?>
         get() = _player
-
-    /**
-     * Класс для проверки интернет соединения
-     */
-    private val connectionManager = ConnectionManager(application.applicationContext) { msg ->
-        _message.postValue(
-            msg
-        )
-    }
+//
+//    /**
+//     * Класс для проверки интернет соединения
+//     */
+//    private val connectionManager = ConnectionManager(application.applicationContext) { msg ->
+//        _message.postValue(
+//            msg
+//        )
+//    }
 
 
     /**
@@ -132,7 +133,7 @@ class StreamViewModel(application: Application) : AndroidViewModel(application) 
         @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         fun onDestroy() {
             hlsPlayer.disable()
-            connectionManager.disable()
+//            connectionManager.disable()
         }
 
     }
