@@ -9,6 +9,9 @@ import retrofit2.awaitResponse
 
 object RequestUtils {
 
+    /**
+     * Упрощенное получение респонса с видео
+     */
     suspend fun getVideos(cameraId: Int?, date: String, seconds: Int): Any {
         val timestamp = date + Utils.getTimeFromSecondsT(seconds)
         val request = CubicAPI.retrofitService.getVideoByTimestamp(
@@ -19,6 +22,9 @@ object RequestUtils {
     }
 
 
+    /**
+     * По [Utils.ApiResponse] создаёт сообщение, которое будет видно пользователю
+     */
     suspend fun handleResponseMessage(response: Utils.ApiResponse): String {
         return when (response) {
             Utils.ApiResponse.UNAUTHORIZED ->

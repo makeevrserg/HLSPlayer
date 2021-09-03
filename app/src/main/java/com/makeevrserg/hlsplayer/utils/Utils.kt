@@ -37,11 +37,6 @@ object Utils {
      * Из заданного файла берет время и конвертирует его в секунды
      */
     fun getSecondsFromFile(file: CameraFileTimestampsItem): Int {
-//        val time = file.file.replace(".mp4", "").split("T").last().split(":")
-//        val hour = time.elementAtOrNull(0)?.toIntOrNull()
-//        val minute = time.elementAtOrNull(1)?.toIntOrNull()
-//        val second = time.elementAtOrNull(2)?.toIntOrNull()
-//        return getSecondsFromTime(hour, minute, second)
         return getSecondsFromString(file.file)
 
     }
@@ -109,9 +104,15 @@ object Utils {
         return ApiResponse.UNEXPECTED_ERROR
     }
 
+    /**
+     * Получение текущей даты в формате
+     */
     fun getCurrentDate(): String =
         SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
+    /**
+     * Наиболее частые ответы с сервера
+     */
     enum class ApiResponse {
         CODE_200,
         CODE_404,

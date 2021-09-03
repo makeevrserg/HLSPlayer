@@ -1,9 +1,16 @@
 package com.makeevrserg.hlsplayer.utils
 
+
+/**
+ * Одноразовый эвент
+ */
 open class Event<out T>(private val content: T) {
 
     private var hasBeenHandled = false
-        private set
+
+    /**
+     * Если эвент уже сработал - возвратится null
+     */
     fun getContentIfNotHandled(): T? {
         return if (hasBeenHandled) {
             null

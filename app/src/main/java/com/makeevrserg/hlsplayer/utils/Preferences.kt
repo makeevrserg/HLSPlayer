@@ -5,13 +5,17 @@ import android.content.SharedPreferences
 import com.makeevrserg.hlsplayer.R
 import com.makeevrserg.hlsplayer.network.cubicapi.response.UserAuthorized
 
-class Preferences(val context: Context) {
+class Preferences(private val context: Context) {
 
-    fun getSharedPrefs(): SharedPreferences = context.getSharedPreferences(
+
+    private fun getSharedPrefs(): SharedPreferences = context.getSharedPreferences(
         context.getString(R.string.shared_prefs_config),
         Context.MODE_PRIVATE
     )
 
+    /**
+     * Сохранение авторизованного пользователя
+     */
     fun saveUserAuthorized(user: UserAuthorized) {
         with(getSharedPrefs().edit()) {
             putString("access_token", user.access_token)
@@ -23,9 +27,15 @@ class Preferences(val context: Context) {
         }
     }
 
-    fun getToken(): String? {
-        return getUserAuthorized()?.access_token
-    }
+    /**
+     * Получение токена пользователя
+     */
+    fun getToken(): String? =
+        getUserAuthorized()?.access_token
+
+    /**
+     * Получение авторизованного пользователя
+     */
     fun getUserAuthorized(): UserAuthorized? {
         val prefs = getSharedPrefs()
         return UserAuthorized(

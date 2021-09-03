@@ -1,4 +1,4 @@
-package com.makeevrserg.hlsplayer.ui.stream.player
+package com.makeevrserg.hlsplayer.utils.player
 
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.source.hls.HlsManifest
@@ -28,6 +28,9 @@ class HLSListener(val hlsPlayer: HLSPlayer) : Player.Listener {
     }
 
 
+    /**
+     * Мониторим переключение на другой медиа файл
+     */
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         hlsPlayer.onMediaItemTransition()
     }
@@ -37,10 +40,7 @@ class HLSListener(val hlsPlayer: HLSPlayer) : Player.Listener {
      * Без использования, но можно читать манифест (Если нужно)
      */
     override fun onTimelineChanged(_timeline: Timeline, reason: Int) {
-
-
         val manifest = (hlsPlayer.player?.currentManifest ?: return) as HlsManifest
-
     }
 
 

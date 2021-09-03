@@ -1,4 +1,4 @@
-package com.makeevrserg.hlsplayer.ui.stream.player
+package com.makeevrserg.hlsplayer.utils.player
 
 import android.content.Context
 import android.net.Uri
@@ -119,6 +119,10 @@ class HLSPlayer(
         this.url = url
         retry(startPosition)
     }
+
+    /**
+     * Добавление медиа в очередь
+     */
     fun addUrl(url:String){
         this.url = url
         exoPlayer?.addMediaSource(getMediaSource())
@@ -144,13 +148,23 @@ class HLSPlayer(
 
     }
 
+    /**
+     * Перемотка на [toSeek] секунд
+     */
     fun fling(toSeek: Int){
         exoPlayer?.let { it.seekTo(toSeek*1000L+it.currentPosition) }
     }
+
+    /**
+     * Установка позиции плеера на [toSeek]
+     */
     fun seekTo(toSeek: Int) {
         exoPlayer?.seekTo(toSeek.toLong())
     }
 
+    /**
+     * Вызывается когда происходит переключение на другой медиа файл
+     */
     fun onMediaItemTransition() {
         _onMediaItemTransition.invoke()
     }

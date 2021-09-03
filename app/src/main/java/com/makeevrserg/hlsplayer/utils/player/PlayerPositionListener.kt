@@ -1,4 +1,4 @@
-package com.makeevrserg.hlsplayer.ui.stream.player
+package com.makeevrserg.hlsplayer.utils.player
 
 import com.google.android.exoplayer2.SimpleExoPlayer
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers

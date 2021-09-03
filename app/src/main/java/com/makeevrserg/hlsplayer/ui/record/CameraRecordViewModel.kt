@@ -12,8 +12,8 @@ import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.Cameras
 import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.timestamp.CameraFileTimestamps
 import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.timestamp.CameraFileTimestampsItem
 import com.makeevrserg.hlsplayer.network.cubicapi.response.events.Events
-import com.makeevrserg.hlsplayer.ui.stream.player.HLSPlayer
-import com.makeevrserg.hlsplayer.ui.stream.player.PlayerPositionListener
+import com.makeevrserg.hlsplayer.utils.player.HLSPlayer
+import com.makeevrserg.hlsplayer.utils.player.PlayerPositionListener
 import com.makeevrserg.hlsplayer.utils.Event
 import com.makeevrserg.hlsplayer.utils.Preferences
 import com.makeevrserg.hlsplayer.utils.RequestUtils
