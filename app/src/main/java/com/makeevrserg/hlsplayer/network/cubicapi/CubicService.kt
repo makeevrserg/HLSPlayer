@@ -1,18 +1,16 @@
 package com.makeevrserg.hlsplayer.network.cubicapi
 
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
 import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
-import com.makeevrserg.hlsplayer.network.cubicapi.response.Cameras
+import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.Cameras
 import com.makeevrserg.hlsplayer.network.cubicapi.response.UserAuthorized
 import com.makeevrserg.hlsplayer.network.cubicapi.response.UserInfo
 import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.timestamp.CameraFileTimestamps
+import com.makeevrserg.hlsplayer.network.cubicapi.response.events.Events
 import com.makeevrserg.hlsplayer.network.cubicapi.response.files.Files
-import kotlinx.coroutines.Deferred
+import com.makeevrserg.hlsplayer.utils.Utils
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Call
-import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
@@ -26,9 +24,8 @@ interface CubicService {
     ): Call<UserAuthorized>
 
 
-
     @GET("files")
-    public fun getFiles():Call<Files>
+    public fun getFiles(): Call<Files>
 
     @GET("auth/me")
     public fun getUserInfo(): Call<UserInfo>
@@ -40,14 +37,23 @@ interface CubicService {
 
     @GET("cameras")
     fun getCameras(
-        @Query("is_folder") isFolder:Int?=0
-    ):Call<Cameras>
+        @Query("is_folder") isFolder: Int? = 0
+    ): Call<Cameras>
 
     @GET("files/movies/timestamp/")
     fun getVideoByTimestamp(
-        @Query("camera_id") cameraId:Int?,
-        @Query("timestamp") timestamp:String?
-    ):Call<CameraFileTimestamps>
+        @Query("camera_id") cameraId: Int?,
+        @Query("timestamp") timestamp: String?
+    ): Call<CameraFileTimestamps>
+
+    @GET("events")
+    fun getEvents(
+        @Query("from") dayFrom: String = Utils.getCurrentDate(),
+        @Query("to") dayTo: String = dayFrom,
+        @Query("limit") limit: Int = -1,
+        @Query("offset") offset: Int = 0,
+        @Query("camera_id[]") camera_ids: ArrayList<Int> = arrayListOf()
+    ): Call<Events>
 
 }
 
@@ -58,7 +64,7 @@ object CubicAPI {
      * Не нашёл нормального способа, как указывать токен пользователя
      */
     private var token: String? = null
-    fun updateToken(token:String?){
+    fun updateToken(token: String?) {
         this.token = token
     }
 

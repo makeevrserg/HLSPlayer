@@ -18,6 +18,7 @@ import com.makeevrserg.hlsplayer.R
 import com.makeevrserg.hlsplayer.databinding.AuthFragmentBinding
 import java.util.*
 
+
 class AuthFragment : Fragment() {
 
     private val viewModel: AuthViewModel by lazy {

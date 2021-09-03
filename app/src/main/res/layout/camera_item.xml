@@ -8,7 +8,7 @@
 
         <variable
             name="camera"
-            type="com.makeevrserg.hlsplayer.network.cubicapi.response.CameraItem" />
+            type="com.makeevrserg.hlsplayer.network.cubicapi.response.camera.CameraItem" />
 
         <variable
             name="viewmodel"

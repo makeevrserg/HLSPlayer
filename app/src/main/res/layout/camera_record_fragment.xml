@@ -13,53 +13,129 @@
     </data>
 
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="15dp">
+        android:layout_height="match_parent">
 
-        <ProgressBar
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="70dp"
-            android:visibility="@{(viewModel.isLoading().contentIfNotHandled==true)?View.VISIBLE:View.GONE}" />
+            android:layout_height="match_parent"
+            android:background="#ffffff"
+            android:orientation="vertical"
+            android:padding="15dp">
 
-        <Button
-            android:id="@+id/buttonDate"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Дата: " />
+            <ProgressBar
+                android:layout_width="match_parent"
+                android:layout_height="70dp"
+                android:visibility="@{(viewModel.isLoading().contentIfNotHandled==true)?View.VISIBLE:View.GONE}" />
 
-        <Spinner
-            android:id="@+id/spinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:contentDescription="Выбор камеры"
-            android:minHeight="50dp" />
+            <Button
+                android:id="@+id/buttonDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Дата: " />
 
-        <com.google.android.exoplayer2.ui.StyledPlayerView
-            android:id="@+id/player_view"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:resize_mode="fit"
-            app:show_buffering="always"
-            android:minHeight="350dp"
-            app:use_controller="true" />
+            <Spinner
+                android:id="@+id/spinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:contentDescription="Выбор камеры"
+                android:minHeight="50dp" />
 
-        <TextView
-            android:id="@+id/textViewTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="00:00:00"/>
-        <SeekBar
-            android:id="@+id/progressBar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:max="86399"
-            android:min="1"
-            android:minHeight="55dp"
-            android:progress="0"
-            android:text="00:00:00" />
-    </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
+                <Button
+                    android:id="@+id/buttonPrevEvent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Предыдущий эвент" />
+
+                <Button
+                    android:id="@+id/buttonNextEvent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Следующий эвент" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/buttonPrev10sec"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Назад 10сек" />
+
+                <Button
+                    android:id="@+id/buttonNext10sec"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Вперед 10сек" />
+            </LinearLayout>
+
+            <com.google.android.exoplayer2.ui.StyledPlayerView
+                android:id="@+id/player_view"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                app:resize_mode="fit"
+                app:show_buffering="always"
+                app:use_controller="false" />
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/textViewTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00:00" />
+
+                <com.makeevrserg.hlsplayer.utils.seekbar.IndicatorProgressBar
+                    android:id="@+id/indicatorProgressBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="25dp"
+                    android:layout_below="@id/textViewTime"
+                    android:layout_centerVertical="true"
+                    android:foregroundGravity="center"
+                    android:progress="0"
+                    app:barHeight="20"
+                    app:indicatorColor="#ffffff"
+                    app:progress="0"
+                    app:progressColor="?colorAccent" />
+
+                <SeekBar
+                    android:id="@+id/progressBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="25dp"
+                    android:layout_below="@id/textViewTime"
+                    android:layout_centerInParent="true"
+                    android:background="@android:color/transparent"
+                    android:backgroundTint="@android:color/transparent"
+                    android:max="86399"
+                    android:min="1"
+                    android:minHeight="55dp"
+                    android:padding="0dp"
+                    android:paddingHorizontal="0dp"
+                    android:progress="50000"
+                    android:progressBackgroundTint="@android:color/transparent"
+                    android:progressTint="@android:color/transparent"
+                    android:thumb="@drawable/ic_thumb_1"
+                    android:thumbTint="?colorAccent" />
+
+
+            </RelativeLayout>
+
+        </LinearLayout>
+    </ScrollView>
 </layout>

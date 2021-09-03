@@ -1,4 +1,4 @@
-package com.makeevrserg.hlsplayer.network.cubicapi.response
+package com.makeevrserg.hlsplayer.network.cubicapi.response.camera
 
 data class Snapshot(
     val created_at: String,

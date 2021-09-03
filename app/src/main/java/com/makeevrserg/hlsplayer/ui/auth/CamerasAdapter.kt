@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.makeevrserg.hlsplayer.databinding.CameraItemBinding
-import com.makeevrserg.hlsplayer.network.cubicapi.response.CameraItem
+import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.CameraItem
 
 class CamerasAdapter(private val viewModel: AuthViewModel) : ListAdapter<CameraItem, CameraViewHolder>(CameraDiffCallback()) {
 

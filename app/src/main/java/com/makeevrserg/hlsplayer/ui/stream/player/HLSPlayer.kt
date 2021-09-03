@@ -144,6 +144,9 @@ class HLSPlayer(
 
     }
 
+    fun fling(toSeek: Int){
+        exoPlayer?.let { it.seekTo(toSeek*1000L+it.currentPosition) }
+    }
     fun seekTo(toSeek: Int) {
         exoPlayer?.seekTo(toSeek.toLong())
     }

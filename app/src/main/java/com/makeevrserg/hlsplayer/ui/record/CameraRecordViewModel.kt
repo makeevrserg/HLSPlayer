@@ -2,24 +2,44 @@ package com.makeevrserg.hlsplayer.ui.record
 
 import android.app.Application
 import android.content.Context
+import android.graphics.Color
 import android.util.Log
 import androidx.lifecycle.*
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.makeevrserg.hlsplayer.network.cubicapi.CubicAPI
-import com.makeevrserg.hlsplayer.network.cubicapi.response.Cameras
+import com.makeevrserg.hlsplayer.network.cubicapi.response.UserAuthorized
+import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.Cameras
 import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.timestamp.CameraFileTimestamps
 import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.timestamp.CameraFileTimestampsItem
+import com.makeevrserg.hlsplayer.network.cubicapi.response.events.Events
 import com.makeevrserg.hlsplayer.ui.stream.player.HLSPlayer
 import com.makeevrserg.hlsplayer.ui.stream.player.PlayerPositionListener
 import com.makeevrserg.hlsplayer.utils.Event
 import com.makeevrserg.hlsplayer.utils.Preferences
+import com.makeevrserg.hlsplayer.utils.RequestUtils
 import com.makeevrserg.hlsplayer.utils.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import retrofit2.awaitResponse
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.abs
 
+/**
+ * Принцип работы:
+ * Максимальное значение ползунка 24*60*60 - максимальное количество секунд в одном дне.
+ *
+ * Изначально запускается HLS стрим выбранной камеры.
+ *
+ * Если пользователь навёл ползунок на время, которое ещё не наступило - начинается HLS стрим. Пользователь уведомлен.
+ *
+ * При наведении ползунка - получаем два видео. До выбранного времени и после. Считываем время первого файла, после чего считаем разницу в секундах между файлов и выбранным значением. Устанавливаем значение ползнука на время первого видео.
+ * Второе видео ставим в плейлист.
+ *
+ * Для правильного отображения времени используем _updatedTimeline с playerPositionListener. Тут у нас складывается выбранная позиция пользователем(то есть время первого видео) и прогресс текущего видео в плеере.
+ *
+ * Когда видео доходит до конца - вызывается onMediaItemTransition. Там мы отключаем слушатель позиции плеера и перезаписываем текущее время. После этого снова включаем слушатель и загружаем новое видео. В этот раз берем только второе.
+ *
+ */
 class CameraRecordViewModel(application: Application) : AndroidViewModel(application) {
 
 
@@ -69,8 +89,10 @@ class CameraRecordViewModel(application: Application) : AndroidViewModel(applica
      * Ссылка на HLS Player
      */
     private val hlsPlayer: HLSPlayer =
-        HLSPlayer(application.applicationContext, "", _onMediaItemTransition = { onMediaItemTransition() })
-
+        HLSPlayer(
+            application.applicationContext,
+            "",
+            _onMediaItemTransition = { onMediaItemTransition() })
 
 
     private val _player = MutableLiveData<SimpleExoPlayer?>(hlsPlayer.player)
@@ -79,27 +101,35 @@ class CameraRecordViewModel(application: Application) : AndroidViewModel(applica
 
 
     /**
+     * Таймлайн выбранный пользователем
+     */
+    private var userSelectedTimeline: Int =
+        Utils.getSecondsFromString(SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date()))
+
+    /**
      * При воспроизведении видео из истории - progressBar должен меняться пока идет видео
      */
-    private val _updatedTimeline = MutableLiveData<Int>()
+    private val _updatedTimeline = MutableLiveData<Int>(userSelectedTimeline)
     val updatedTimeLine: LiveData<Int>
         get() = _updatedTimeline
+
+
+    /**
+     * Эвенты которые происходили в течение 24 часов. Их позиции
+     */
+    private val _events = MutableLiveData<Map<Float, Int>>()
+    val events: LiveData<Map<Float, Int>>
+        get() = _events
 
     /**
      * Возвращает позицию ползунка. Для этого нужно сложить выбранную позицию пользователя и текущую позицию плеера
      */
     private val playerPositionListener = PlayerPositionListener(hlsPlayer.player) { position ->
-        if (position<0)
+        if (position < 0)
             return@PlayerPositionListener
         _updatedTimeline.value = (position / 1000L).toInt() + userSelectedTimeline
     }
 
-
-
-    /**
-     * Таймлайн выбранный пользователем
-     */
-    private var userSelectedTimeline: Int = 0
     private val TAG = "CameraRecordViewModel"
 
 
@@ -119,9 +149,21 @@ class CameraRecordViewModel(application: Application) : AndroidViewModel(applica
     }
 
     private fun setHlsStream() {
+        playerPositionListener.disableListener()
         hlsPlayer.setURL(Utils.getHlsUrl(cameras!![cameraIndex].id, getApplication()))
     }
 
+
+    /**
+     * Возвращает реквест видео с текущим временем и датой
+     */
+    private suspend fun getVideoBySelectedTime(): Any? {
+        return RequestUtils.getVideos(
+            getCurrentCameraId() ?: return null,
+            _date.value ?: return null,
+            userSelectedTimeline
+        )
+    }
 
     /**
      * Вызывается когда видео доходит до конца
@@ -134,7 +176,9 @@ class CameraRecordViewModel(application: Application) : AndroidViewModel(applica
             userSelectedTimeline = it
             playerPositionListener.enableListener()
             viewModelScope.launch {
-                val videos = getVideos()?.toMutableList() ?: return@launch
+                val videos = getVideoBySelectedTime()
+                if (videos !is CameraFileTimestamps)
+                    return@launch
                 videos.removeAt(0)
                 videos.forEach { video ->
                     addPlayerQueue(video)
@@ -143,6 +187,7 @@ class CameraRecordViewModel(application: Application) : AndroidViewModel(applica
         }
 
     }
+
 
     /**
      * Получение доступных камер.
@@ -153,12 +198,10 @@ class CameraRecordViewModel(application: Application) : AndroidViewModel(applica
 
             val request = CubicAPI.retrofitService.getCameras()
             val response = Utils.getResponse(request)
-            if (response is String) {
-                viewModelScope.launch(Dispatchers.Main) {
-                    _message.value = Event(response)
-                    stopLoading()
-                }
+            if (response is Utils.ApiResponse) {
+                _message.value = Event(RequestUtils.handleResponseMessage(response))
                 onLoginRequest()
+                stopLoading()
                 return@launch
             }
             cameras = response as Cameras
@@ -167,6 +210,7 @@ class CameraRecordViewModel(application: Application) : AndroidViewModel(applica
             _cameraNames.postValue(list)
             setHlsStream()
             stopLoading()
+            getEvents()
         }
 
     }
@@ -178,40 +222,34 @@ class CameraRecordViewModel(application: Application) : AndroidViewModel(applica
     private fun updateToken(context: Context): Unit =
         CubicAPI.updateToken(Preferences(context).getToken())
 
+    /**
+     * Авторизация пользователя
+     */
     fun login(login: String, password: String) {
-        if (login.isEmpty() || password.isEmpty())
-            onLoginRequest()
+
         viewModelScope.launch {
             startLoading()
-            val response = CubicAPI.retrofitService.loginUser(login, password).awaitResponse()
-
-            if (response.message().contains("unauthorized", ignoreCase = true)) {
+            val response = Utils.getResponse(CubicAPI.retrofitService.loginUser(login, password))
+            if (response is Utils.ApiResponse) {
+                _message.postValue(Event(RequestUtils.handleResponseMessage(response)))
                 onLoginRequest()
                 stopLoading()
                 return@launch
-            }
-
-
-            if (response.isSuccessful) {
-                val user = response.body()
-                if (user == null) {
-                    Log.d(TAG, "user is null: ${response.message()} ${response.code()}")
-                    return@launch
-                }
-                Log.d(TAG, "Authorization completed: ")
-                Preferences(getApplication()).saveUserAuthorized(user)
+            } else if (response is UserAuthorized) {
+                Preferences(getApplication()).saveUserAuthorized(response)
                 CubicAPI.updateToken(Preferences(getApplication()).getToken())
                 getCameras()
-            } else {
-                Log.d(
-                    TAG,
-                    "response is not Successful: ${response.body()} ${response.message()} ${response.code()}"
-                )
             }
             stopLoading()
+
         }
+
+
     }
 
+    /**
+     * Добавляет видео в очередь плеера
+     */
     private fun addPlayerQueue(file: CameraFileTimestampsItem?) {
         Log.d(TAG, "addPlayerQueue: ${file?.file}")
         hlsPlayer.addUrl(Utils.getFileUrl(file?.file ?: return))
@@ -224,8 +262,21 @@ class CameraRecordViewModel(application: Application) : AndroidViewModel(applica
     private suspend fun setPlayerHistoryUrl(files: CameraFileTimestamps) {
         val file = files.first()
         val fileSeconds = Utils.getSecondsFromFile(file)
-        val toSeek = userSelectedTimeline - fileSeconds
-        userSelectedTimeline-=toSeek
+        var toSeek = userSelectedTimeline - fileSeconds
+        if (abs(toSeek) > 70) {
+            userSelectedTimeline = fileSeconds
+            toSeek = 0
+            _message.postValue(
+                Event(
+                    "Ближайшее время ${
+                        Utils.getTimeFromSeconds(
+                            userSelectedTimeline
+                        )
+                    }"
+                )
+            )
+        }
+        userSelectedTimeline -= toSeek
         viewModelScope.launch(Dispatchers.Main) {
             hlsPlayer.setURL(Utils.getFileUrl(file.file), toSeek * 1000L)
             playerPositionListener.enableListener()
@@ -233,23 +284,10 @@ class CameraRecordViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    private suspend fun getVideos(): CameraFileTimestamps? {
-        val cameraId = cameras?.get(cameraIndex)?.id ?: return null
-        val timestamp = _date.value + Utils.getTimeFromSecondsT(userSelectedTimeline)
-        val request = CubicAPI.retrofitService.getVideoByTimestamp(
-            cameraId,
-            timestamp
-        )
-        val response = Utils.getResponse(request)
-        if (response is String) {
-            viewModelScope.launch(Dispatchers.Main) {
-                _message.value = Event(response)
-                setHlsStream()
-            }
-            return null
-        }
-        return response as CameraFileTimestamps
-    }
+    /**
+     * Получение ID текущей выбранной камеры
+     */
+    private fun getCurrentCameraId() = cameras?.get(cameraIndex)?.id
 
     /**
      * После выбора камеры ставим Live режим
@@ -257,6 +295,10 @@ class CameraRecordViewModel(application: Application) : AndroidViewModel(applica
     fun onCameraSelected(index: Int) {
         cameraIndex = index
         setHlsStream()
+        viewModelScope.launch {
+            getEvents()
+        }
+
     }
 
     /**
@@ -265,19 +307,120 @@ class CameraRecordViewModel(application: Application) : AndroidViewModel(applica
     fun onDateSelected(year: Int, month: Int, day: Int) {
         _date.value = "$year-${month + 1}-$day"
         viewModelScope.launch {
-            setPlayerHistoryUrl(getVideos() ?: return@launch)
+            setVideo()
+            getEvents()
         }
+    }
+
+    /**
+     * Ставит видео с текущей датой и временем
+     */
+    private suspend fun setVideo() {
+        val videos = getVideoBySelectedTime()
+        if (videos is Utils.ApiResponse) {
+            _message.postValue(Event(RequestUtils.handleResponseMessage(videos)))
+            setHlsStream()
+        }
+        if (videos is CameraFileTimestamps)
+            setPlayerHistoryUrl(videos)
     }
 
     /**
      * Запоминаем значение выбранного таймлайна и включаем ближайшее видео
      */
-    fun onProgressChanged(progress: Int) {
-        userSelectedTimeline = progress
+    fun onProgressChanged(progress: Int?) {
+        userSelectedTimeline = progress?:return
+        _updatedTimeline.value = userSelectedTimeline
         viewModelScope.launch {
-            setPlayerHistoryUrl(getVideos() ?: return@launch)
+            setVideo()
         }
     }
+
+    /**
+     * Получение списка всех эвентов за 24часа текущей камеры и текущего дня
+     */
+    private suspend fun getEvents() {
+        startLoading()
+        val request = CubicAPI.retrofitService.getEvents(
+            dayFrom = _date.value ?: return,
+            camera_ids = arrayListOf(getCurrentCameraId() ?: return)
+        )
+        val response = Utils.getResponse(request)
+
+        if (response is Utils.ApiResponse) {
+            _message.postValue(Event(RequestUtils.handleResponseMessage(response)))
+            stopLoading()
+            return
+        } else if (response is Events) {
+            val map = mutableMapOf<Float, Int>()
+            for (event in response.data) {
+                val pos = Utils.getSecondsFromString(event.created_at.replace(" ", "T"))
+                //Здесь можно установить цвета в зависимости от типа эвента
+                map[pos.toFloat()] = when (event.type) {
+                    "7" -> Color.RED
+                    else -> Color.BLACK
+                }
+            }
+            _events.postValue(map)
+        }
+        stopLoading()
+
+    }
+
+    /**
+     * Переключение позиции ползунка на предыдущий эвент.
+     *
+     * Алгоритм: Берется список доступных эвентов и выбираются только те, которые прошли до текущей позиции.
+     *
+     * После этого они сортируются по возрастанию. Если прошло больше 10 секунд между последним эвентом и текущим, то выбирается последний.
+     * Если прошло меньше, то выбирается предпоследний.
+     */
+    fun onPrevEventClicked() {
+        _updatedTimeline.value?.let { position ->
+            val events =
+                _events.value?.keys?.filter { it < position }?.sorted()?.toMutableList() ?: return
+            if (abs(position - (events.lastOrNull() ?: return)) > 10)
+                onProgressChanged(events.lastOrNull()?.toInt() ?: return)
+            else {
+                events.removeLastOrNull()
+                onProgressChanged(events.lastOrNull()?.toInt() ?: return)
+            }
+
+        }
+
+
+    }
+
+    /**
+     * Переключение позиции на следующий эвент. Код аналогичен [onPrevEventClicked]. Надо будет нормально переписать
+     */
+    fun onNextEventClicked() {
+        _updatedTimeline.value?.let { position ->
+            val events =
+                _events.value?.keys?.filter { it > position }?.sorted()?.toMutableList() ?: return
+            if (abs(position - (events.firstOrNull() ?: return)) > 10)
+                onProgressChanged(events.firstOrNull()?.toInt() ?: return)
+            else {
+                events.removeFirstOrNull()
+                onProgressChanged(events.firstOrNull()?.toInt() ?: return)
+            }
+
+        }
+    }
+
+    /**
+     * Перемотка на 10 секунд вперед
+     */
+    fun onNext10SecClicked() =
+        onProgressChanged(_updatedTimeline.value?.plus(10))
+
+
+    /**
+     * Перемотка на 10 секунд назад
+     */
+    fun onPrev10SecClicked() =
+        onProgressChanged(_updatedTimeline.value?.minus(10))
+
 
     init {
         updateToken(application)
@@ -285,3 +428,5 @@ class CameraRecordViewModel(application: Application) : AndroidViewModel(applica
         getCameras()
     }
 }
+
+

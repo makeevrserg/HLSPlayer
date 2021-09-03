@@ -2,26 +2,22 @@ package com.makeevrserg.hlsplayer.ui.auth
 
 import android.app.Application
 import android.content.Context
-import android.system.ErrnoException
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.makeevrserg.hlsplayer.network.cubicapi.CubicAPI
-import com.makeevrserg.hlsplayer.network.cubicapi.response.Cameras
-import com.makeevrserg.hlsplayer.network.cubicapi.response.CameraItem
+import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.Cameras
+import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.CameraItem
 import com.makeevrserg.hlsplayer.network.cubicapi.response.camera.timestamp.CameraFileTimestamps
 import com.makeevrserg.hlsplayer.utils.Event
 import com.makeevrserg.hlsplayer.utils.Preferences
 import com.makeevrserg.hlsplayer.utils.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
 import retrofit2.awaitResponse
 import java.lang.Exception
-import java.net.ConnectException
-import java.net.SocketTimeoutException
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
